@@ -24,3 +24,42 @@ Cette approche respecte le principe d’inversion de dépendance (DIP) et facili
 
 On ne met pas la logique directement dans TaskManager car c’est une mauvaise pratique qui implique un couplage fort, une impossibilité à tester facilement et une architecture rigide.
 
+# Stockage des données
+
+## Comparatif
+### SharedPreferences / DataStore : 
+Sert à stocker des objets simples tels que des strings, des ints, ou des booléens.  
+C'est très simple et rapide, mas non adapté à des objets complexes.  
+
+### Fichiers locaux (JSON / XML): 
+Sert à stocker des objets Kotlin, des listes, des structures personnalisées dans un fichier.  
+C'est simple, lisible, et ça n'utilise pas de framework lourds. Mais, on ne peut pas faire de requêtes (tri, filtre, recherche lente), il y a un risque de corruption et ce n'est pas scalable.  
+
+### SQLLite (Manuel) : 
+Sert à stocker des tables, des relations et des index dans une base de données relationnelle locale.  
+C'est très performant, le contrôle est local et c'est un standard Android. Mais c'est verbeux, et il y a des erreurs SQL fréquentes.  
+C'est techniquement solide mais dépassé seul aujourd'hui.
+
+### Room : 
+C'est une surcouche moderne de SQLite (officielle Google) qui peut stoquer des objets Kotlin, des relations et des requêtes SQL sécurisées.  
+C'est typé et sécurisé, très prorpe et parfait pour le CRUD (Create, Read, Update, Delete).
+
+### Base de données distante : 
+Les données sont stockées sur un serveur. On peut y faire de la synchronisation cloud et du multi-utilisateur.  
+Une connexion est requise, c'est plus complexe et exagéré pour une to-do list.
+
+## Solution retenue : Room
+Room fournit une couche d’abstraction sur SQLite afin de permettre un accès fluide à la base de données, tout en exploitant toute la puissance de SQLite. Il offre en particulier les avantages suivants :  
+- Une vérification des requêtes SQL au moment de la compilation  
+- Des annotations pratiques qui réduisent le code récurrent qui peut s’avérer répétitif et être sujet aux erreurs  
+- Des chemins de migration simplifiés pour les bases de données  
+
+Pour utiliser Room dans une application, il faut ajouter les dépendances ksp.
+
+Composants principaux : 
+Room repose sur trois composants principaux :  
+- La classe de base de données qui contient la base de données et sert de point d’accès principal pour la connexion sous-jacente aux données persistantes de l’application  
+- Les entités de données qui représentent les tables de la base de données de l’application  
+- Les objets d’accès aux données (DAO) qui fournissent des méthodes que l’application peut utiliser pour interroger, mettre à jour, insérer et supprimer des données dans la base de données
+
+La classe de base de données fournit à l’application des instances des DAO associés à cette base de données. L’application peut ensuite utiliser ces DAO pour récupérer des données de la base de données en tant qu’instances des objets d’entité associés. L’application peut également utiliser les entités de données définies pour mettre à jour des lignes dans les tables correspondantes ou pour créer des lignes à insérer.
