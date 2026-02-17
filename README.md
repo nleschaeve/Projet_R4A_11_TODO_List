@@ -63,3 +63,6 @@ Room repose sur trois composants principaux :
 - Les objets d’accès aux données (DAO) qui fournissent des méthodes que l’application peut utiliser pour interroger, mettre à jour, insérer et supprimer des données dans la base de données
 
 La classe de base de données fournit à l’application des instances des DAO associés à cette base de données. L’application peut ensuite utiliser ces DAO pour récupérer des données de la base de données en tant qu’instances des objets d’entité associés. L’application peut également utiliser les entités de données définies pour mettre à jour des lignes dans les tables correspondantes ou pour créer des lignes à insérer.
+
+# Maquettes : 
+Les maquettes sont disponible sur Figma à l'adresse suivante : [Maquettes FIGMA](https://www.figma.com/design/BPlbvC5euTOoNuCMjJ3cpT/TODO-Kotlin-Project?node-id=9-184&t=QboapuDHsWmKIjUy-0)
