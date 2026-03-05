@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">TODO LIST</string>
+    <string name="app_name">Tic-Task-Test</string>
+    <string name="title_error">Le titre n\'est pas valide</string>
+    <string name="description_error">La description n\'est pas valide</string>
+    <string name="date_error">La date n\'est pas valide</string>
+    <string name="time_error">L\'heure n\'est pas valide</string>
 </resources>

@@ -1,47 +1,58 @@
-package com.example.todolist
+package com.example.todolist.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.todolist.ui.theme.TODOLISTTheme
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.rememberNavController
+import com.example.todolist.controller.TaskController
+import com.example.todolist.controller.TaskManager
+import com.example.todolist.data.local.AppDatabase
+import com.example.todolist.model.repository.TaskRepositoryImpl
+import com.example.todolist.model.service.TaskStatusService
+import com.example.todolist.navigation.AppNavGraph
+import com.example.todolist.ui.theme.TicTaskTheme
+import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class TaskListActivity : ComponentActivity() {
+
+    private lateinit var database: AppDatabase
+
+    private lateinit var taskManager: TaskManager
+    private lateinit var taskController: TaskController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        // Initialisation de la base de données
+        database = AppDatabase.getInstance(this)
+
+        val dao = database.taskDao()
+        val repository = TaskRepositoryImpl(dao)
+        val service = TaskStatusService()
+
+        taskManager = TaskManager(repository, service)
+
+        // Initialisation du TaskController
+        taskController = TaskController(repository)
+
         setContent {
-            TODOLISTTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            TicTaskTheme {
+                val navController = rememberNavController()
+                AppNavGraph(
+                    navController = navController,
+                    taskController = taskController,
+                    taskDao = dao
+                )
             }
         }
-    }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    TODOLISTTheme {
-        Greeting("Android")
+        lifecycleScope.launch {
+            taskManager.getTasksByState(
+                com.example.todolist.model.entity.TaskState.TODO
+            ).collect { tasks ->
+                // afficher les tâches
+            }
+        }
     }
 }
