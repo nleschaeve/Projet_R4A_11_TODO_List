@@ -15,6 +15,10 @@ class TaskManager(
         repository.add(task)
     }
 
+    suspend fun removeTask(task: Task) {
+        repository.remove(task)
+    }
+
     fun getTasksByState(state: TaskState): Flow<List<Task>> {
         return repository.getByState(state)
     }

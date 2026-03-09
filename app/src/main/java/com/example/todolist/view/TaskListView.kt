@@ -149,6 +149,7 @@ fun TaskListView(controller: TaskController, navController: NavController) {
             }
         }
 
+        // Affichage de la liste des tâches
         if (tasks.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -168,7 +169,7 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                     TaskItem(
                         task = task,
                         displayTask = {
-                            // Afficher la page de détail d'une tâche
+                            navController.navigate(NavRoutes.TaskDetail.createRoute(task.id))
                         }
                     )
                 }

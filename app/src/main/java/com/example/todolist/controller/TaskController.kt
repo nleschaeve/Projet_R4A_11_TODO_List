@@ -13,11 +13,23 @@ class TaskController(
         repository.add(task)
     }
 
+    suspend fun removeTask(task: Task) {
+        repository.remove(task)
+    }
+
+    fun getTaskById(id: Int): Flow<Task?> {
+        return repository.getById(id)
+    }
+
     fun getAllTasks(): Flow<List<Task>> {
         return repository.getAll()
     }
 
     fun getTasksByState(state: TaskState): Flow<List<Task>> {
         return repository.getByState(state)
+    }
+
+    suspend fun updateTask(task: Task) {
+        repository.update(task)
     }
 }

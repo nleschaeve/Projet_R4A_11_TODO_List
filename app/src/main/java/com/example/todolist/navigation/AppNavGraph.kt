@@ -10,6 +10,8 @@ import com.example.todolist.controller.TaskController
 import com.example.todolist.data.local.TaskDao
 import com.example.todolist.view.TaskAdd
 import com.example.todolist.view.TaskListView
+import com.example.todolist.view.TaskDetail
+import com.example.todolist.view.TaskModify
 
 @Composable
 fun AppNavGraph(
@@ -34,6 +36,43 @@ fun AppNavGraph(
             TaskAdd(
                 controller = taskController,
                 navController = navController
+            )
+        }
+
+        // Écran de détails d'une tâche
+        composable(
+            route = NavRoutes.TaskDetail.route,
+            arguments = listOf(
+                navArgument("taskId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) { backStackEntry ->
+            val taskId = backStackEntry.arguments?.getInt("taskId") ?: -1
+            TaskDetail(
+                controller = taskController,
+                navController = navController,
+                taskId = taskId
+            )
+        }
+
+        // Écran de modification de tâche
+        composable(
+            route = NavRoutes.TaskModify.route,
+            arguments = listOf(
+                navArgument("taskId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) {
+            backStackEntry ->
+            val taskId = backStackEntry.arguments?.getInt("taskId") ?: -1
+            TaskModify(
+                controller = taskController,
+                navController = navController,
+                taskId = taskId
             )
         }
     }

@@ -13,8 +13,20 @@ class TaskRepositoryImpl(
         dataSource.insert(task)
     }
 
+    override suspend fun remove(task: Task) {
+        dataSource.delete(task)
+    }
+
+    override suspend fun update(task: Task) {
+        dataSource.update(task)
+    }
+
     override fun getAll(): Flow<List<Task>> {
         return dataSource.getAll()
+    }
+
+    override fun getById(id: Int): Flow<Task?> {
+        return dataSource.getById(id)
     }
 
     override fun getByState(state: TaskState): Flow<List<Task>> {
