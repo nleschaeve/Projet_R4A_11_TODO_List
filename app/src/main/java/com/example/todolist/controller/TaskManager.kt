@@ -22,4 +22,14 @@ class TaskManager(
     fun getTasksByState(state: TaskState): Flow<List<Task>> {
         return repository.getByState(state)
     }
+
+    suspend fun markTaskAsTodo(task: Task) {
+        val updated = statusService.markAsTodo(task)
+        repository.update(updated)
+    }
+
+    suspend fun completeTask(task: Task) {
+        val updated = statusService.markAsDone(task)
+        repository.update(updated)
+    }
 }

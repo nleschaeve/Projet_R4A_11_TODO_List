@@ -32,4 +32,14 @@ class TaskController(
     suspend fun updateTask(task: Task) {
         repository.update(task)
     }
+
+    suspend fun markTaskAsTodo(task: Task) {
+        val updated = task.copy(state = TaskState.TODO)
+        repository.update(updated)
+    }
+
+    suspend fun completeTask(task: Task) {
+        val updated = task.copy(state = TaskState.DONE)
+        repository.update(updated)
+    }
 }

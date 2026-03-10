@@ -170,6 +170,16 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                         task = task,
                         displayTask = {
                             navController.navigate(NavRoutes.TaskDetail.createRoute(task.id))
+                        },
+                        onMarkTodo = {
+                            scope.launch {
+                                controller.markTaskAsTodo(task)
+                            }
+                        },
+                        onMarkComplete = {
+                            scope.launch {
+                                controller.completeTask(task)
+                            }
                         }
                     )
                 }
@@ -181,6 +191,8 @@ fun TaskListView(controller: TaskController, navController: NavController) {
 @Composable
 fun TaskItem(
     task: Task,
+    onMarkTodo: () -> Unit,
+    onMarkComplete: () -> Unit,
     displayTask: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -242,6 +254,26 @@ fun TaskItem(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("À faire") },
+                        onClick = {
+                            expanded = false
+                            onMarkTodo()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Réalisée") },
+                        onClick = {
+                            expanded = false
+                            onMarkComplete()
+                        }
+                    )
+                }
+
             }
         }
     }
