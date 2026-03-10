@@ -3,10 +3,13 @@ package com.example.todolist.controller
 import com.example.todolist.model.entity.Task
 import com.example.todolist.model.entity.TaskState
 import com.example.todolist.model.repository.TaskRepository
+import com.example.todolist.model.service.TaskStatusService
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class TaskController(
-    private val repository: TaskRepository
+    private val repository: TaskRepository,
+    private val statusService: TaskStatusService
 ) {
 
     suspend fun addTask(task: Task) {
@@ -34,12 +37,24 @@ class TaskController(
     }
 
     suspend fun markTaskAsTodo(task: Task) {
-        val updated = task.copy(state = TaskState.TODO)
+        val updated = statusService.markAsTodo(task)
         repository.update(updated)
     }
 
     suspend fun completeTask(task: Task) {
-        val updated = task.copy(state = TaskState.DONE)
+        val updated = statusService.markAsDone(task)
         repository.update(updated)
+    }
+
+    suspend fun checkAndUpdateLateTasks(): Int {
+        val todoTasks = repository.getByState(TaskState.TODO).first()
+        var updatedCount = 0
+        todoTasks.forEach { task ->
+            if (statusService.isLate(task)) {
+                repository.update(statusService.markAsLate(task))
+                updatedCount++
+            }
+        }
+        return updatedCount
     }
 }

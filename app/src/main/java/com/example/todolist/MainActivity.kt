@@ -34,7 +34,7 @@ class TaskListActivity : ComponentActivity() {
         taskManager = TaskManager(repository, service)
 
         // Initialisation du TaskController
-        taskController = TaskController(repository)
+        taskController = TaskController(repository, service)
 
         setContent {
             TicTaskTheme {
@@ -48,11 +48,7 @@ class TaskListActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            taskManager.getTasksByState(
-                com.example.todolist.model.entity.TaskState.TODO
-            ).collect { tasks ->
-                // afficher les tâches
-            }
+            taskController.checkAndUpdateLateTasks()
         }
     }
 }

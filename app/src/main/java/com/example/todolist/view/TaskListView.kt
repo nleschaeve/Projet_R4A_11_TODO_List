@@ -40,8 +40,20 @@ fun TaskListView(controller: TaskController, navController: NavController) {
     val scope = rememberCoroutineScope()
     val tasks by controller.getAllTasks().collectAsState(initial = emptyList())
     var sortedAsc by remember { mutableStateOf(true) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Tri des tâches par état (TODO -> LATE -> DONE) puis par date si renseignée
+    // Vérifier les tâches en retard
+    LaunchedEffect(tasks) {
+        val lateCount = tasks.count { it.state == TaskState.LATE }
+        if (lateCount > 0) {
+            snackbarHostState.showSnackbar(
+                message = "Attention : Vous avez $lateCount tâche(s) en retard !",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    // Tri des tâches par état (LATE -> TODO -> DONE) puis par date si renseignée
     val sortedTasks = remember(tasks, sortedAsc) {
         val stateOrder = mapOf(
             TaskState.LATE to 0,
@@ -59,129 +71,134 @@ fun TaskListView(controller: TaskController, navController: NavController) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            Text(
-                text = "Tic-Task",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight(1000)
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(28.dp, 200.dp, 28.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Text(
-                    text = "Tâches :",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(end = 16.dp),
+                    text = "Tic-Task",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight(1000)
                 )
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            navController.navigate(NavRoutes.TaskAdd.route)
-                        }
-                    },
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(40.dp)
-                        .padding(0.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Ajouter une tâche",
-                        tint = Color(MaterialTheme.colorScheme.onSecondary.value)
-                    )
-                }
             }
-            Row (
+            Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(10.dp, 6.dp)
+                    .fillMaxWidth()
+                    .padding(28.dp, 20.dp, 28.dp) // Réduit le padding du haut pour que le titre reste visible
             ) {
-                Button (
-                    onClick = {
-                        sortedAsc = !sortedAsc
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                    modifier = Modifier.padding(0.dp)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Filtrer",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        text = "Tâches :",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(end = 16.dp),
                         fontWeight = FontWeight(1000)
                     )
-                }
-                Icon(
-                    imageVector = if (sortedAsc) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                    contentDescription = "sort by state",
-                    tint = Color(MaterialTheme.colorScheme.onSurface.value)
-                )
-            }
-        }
 
-        // Affichage de la liste des tâches
-        if (tasks.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Aucune tâche pour le moment")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sortedTasks) { task ->
-                    TaskItem(
-                        task = task,
-                        displayTask = {
-                            navController.navigate(NavRoutes.TaskDetail.createRoute(task.id))
-                        },
-                        onMarkTodo = {
+                    Button(
+                        onClick = {
                             scope.launch {
-                                controller.markTaskAsTodo(task)
+                                navController.navigate(NavRoutes.TaskAdd.route)
                             }
                         },
-                        onMarkComplete = {
-                            scope.launch {
-                                controller.completeTask(task)
-                            }
-                        }
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(40.dp)
+                            .padding(0.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Ajouter une tâche",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(10.dp, 6.dp)
+                ) {
+                    Button (
+                        onClick = {
+                            sortedAsc = !sortedAsc
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                        modifier = Modifier.padding(0.dp)
+                    ) {
+                        Text(
+                            text = "Filtrer",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight(1000)
+                        )
+                    }
+                    Icon(
+                        imageVector = if (sortedAsc) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                        contentDescription = "sort by state",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
+                }
+            }
+
+            // Affichage de la liste des tâches
+            if (tasks.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Aucune tâche pour le moment")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(15.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(sortedTasks) { task ->
+                        TaskItem(
+                            task = task,
+                            displayTask = {
+                                navController.navigate(NavRoutes.TaskDetail.createRoute(task.id))
+                            },
+                            onMarkTodo = {
+                                scope.launch {
+                                    controller.markTaskAsTodo(task)
+                                }
+                            },
+                            onMarkComplete = {
+                                scope.launch {
+                                    controller.completeTask(task)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -198,14 +215,12 @@ fun TaskItem(
     var expanded by remember { mutableStateOf(false) }
     // Point de couleur selon l'état
     val stateColor = when (task.state) {
-        TaskState.TODO -> Color(Orange.value) // Orange
-        TaskState.LATE -> Color(Red.value) // Rouge
-        TaskState.DONE -> Color(Green.value) // Vert
+        TaskState.TODO -> Orange
+        TaskState.LATE -> Red
+        TaskState.DONE -> Green
     }
     Card(
-        colors = Color(MaterialTheme.colorScheme.surfaceContainerLow.value).let { backgroundColor ->
-            CardDefaults.cardColors(containerColor = backgroundColor)
-        },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier
             .fillMaxWidth()
     ) {
@@ -251,7 +266,8 @@ fun TaskItem(
                     Text(
                         text = task.state.toString(),
                         fontWeight = FontWeight(600),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
                     )
                 }
                 DropdownMenu(
