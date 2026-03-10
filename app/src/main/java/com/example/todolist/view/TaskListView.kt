@@ -1,7 +1,7 @@
 package com.example.todolist.view
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,14 +12,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -33,7 +31,7 @@ import com.example.todolist.ui.theme.Red
 import com.example.todolist.ui.theme.Orange
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.LocalTime
+import kotlin.random.Random
 
 @Composable
 fun TaskListView(controller: TaskController, navController: NavController) {
@@ -42,18 +40,28 @@ fun TaskListView(controller: TaskController, navController: NavController) {
     var sortedAsc by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Vérifier les tâches en retard
+    val congratulationMessages = listOf(
+        "🥳 Bravo ! Tâche accomplie ! 🥳",
+        "🚀 Félicitations ! Vous êtes efficace ! 🚀",
+        "✨ Magnifique ! Une de moins ! ✨",
+        "🎯 Quel talent ! Continuez comme ça ! 🎯",
+        "💪 Productivité au top ! 💪"
+    )
+
+    // Alerte pour les tâches en retard (affichée une seule fois au changement du nombre)
+    var lastLateCount by remember { mutableIntStateOf(0) }
     LaunchedEffect(tasks) {
-        val lateCount = tasks.count { it.state == TaskState.LATE }
-        if (lateCount > 0) {
+        val currentLateCount = tasks.count { it.state == TaskState.LATE }
+        if (currentLateCount > lastLateCount) {
             snackbarHostState.showSnackbar(
-                message = "Attention : Vous avez $lateCount tâche(s) en retard !",
+                message = "Attention : Vous avez $currentLateCount tâche(s) en retard ! ⚠️",
                 duration = SnackbarDuration.Short
             )
         }
+        lastLateCount = currentLateCount
     }
 
-    // Tri des tâches par état (LATE -> TODO -> DONE) puis par date si renseignée
+    // Tri des tâches par état (LATE -> TODO -> DONE) puis par date
     val sortedTasks = remember(tasks, sortedAsc) {
         val stateOrder = mapOf(
             TaskState.LATE to 0,
@@ -86,6 +94,7 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 28.dp, vertical = 16.dp)
             ) {
                 Text(
                     text = "Tic-Task",
@@ -99,7 +108,7 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(28.dp, 20.dp, 28.dp) // Réduit le padding du haut pour que le titre reste visible
+                    .padding(28.dp, 200.dp, 28.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -112,43 +121,25 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                         modifier = Modifier.padding(end = 16.dp),
                         fontWeight = FontWeight(1000)
                     )
-
+                    Spacer(modifier = Modifier.width(16.dp))
                     Button(
-                        onClick = {
-                            scope.launch {
-                                navController.navigate(NavRoutes.TaskAdd.route)
-                            }
-                        },
+                        onClick = { navController.navigate(NavRoutes.TaskAdd.route) },
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(40.dp)
-                            .padding(0.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        modifier = Modifier.size(40.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Ajouter une tâche",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Default.Add, contentDescription = "Ajouter")
                     }
                 }
-                Row (
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(10.dp, 6.dp)
+                
+                Surface(
+                    onClick = { sortedAsc = !sortedAsc },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface
                 ) {
-                    Button (
-                        onClick = {
-                            sortedAsc = !sortedAsc
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                        modifier = Modifier.padding(0.dp)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "Filtrer",
@@ -156,48 +147,46 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight(1000)
                         )
+                        Icon(
+                            imageVector = if (sortedAsc) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                            contentDescription = null
+                        )
                     }
-                    Icon(
-                        imageVector = if (sortedAsc) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                        contentDescription = "sort by state",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
                 }
             }
 
-            // Affichage de la liste des tâches
+            // Liste des tâches
             if (tasks.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Aucune tâche pour le moment")
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .padding(15.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(sortedTasks) { task ->
-                        TaskItem(
-                            task = task,
-                            displayTask = {
-                                navController.navigate(NavRoutes.TaskDetail.createRoute(task.id))
-                            },
-                            onMarkTodo = {
-                                scope.launch {
-                                    controller.markTaskAsTodo(task)
+                    items(sortedTasks, key = { it.id }) { task ->
+                        Box(modifier = Modifier.animateItem()) {
+                            TaskItem(
+                                task = task,
+                                displayTask = { navController.navigate(NavRoutes.TaskDetail.createRoute(task.id)) },
+                                onMarkTodo = {
+                                    scope.launch { 
+                                        controller.markTaskAsTodo(task)
+                                        controller.checkAndUpdateLateTasks()
+                                    }
+                                },
+                                onMarkComplete = {
+                                    scope.launch {
+                                        controller.completeTask(task)
+                                        snackbarHostState.showSnackbar(
+                                            message = congratulationMessages[Random.nextInt(congratulationMessages.size)],
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
-                            },
-                            onMarkComplete = {
-                                scope.launch {
-                                    controller.completeTask(task)
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -213,21 +202,26 @@ fun TaskItem(
     displayTask: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // Point de couleur selon l'état
-    val stateColor = when (task.state) {
+    
+    // Animation de la couleur d'état
+    val targetColor = when (task.state) {
         TaskState.TODO -> Orange
         TaskState.LATE -> Red
         TaskState.DONE -> Green
     }
+    val animatedStateColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(durationMillis = 500),
+        label = "stateColor"
+    )
+
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = Modifier
-            .fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -236,60 +230,42 @@ fun TaskItem(
                     modifier = Modifier
                         .size(12.dp)
                         .clip(CircleShape)
-                        .background(stateColor)
+                        .background(animatedStateColor)
                 )
-                Button(
-                    onClick = displayTask,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
+                TextButton(onClick = displayTask) {
                     Text(
                         text = task.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontSize = 4.em,
-                        fontWeight = FontWeight(1000)
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
-            Row (verticalAlignment = Alignment.CenterVertically) {
+            
+            Box {
                 Button(
                     onClick = { expanded = true },
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = stateColor),
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                    modifier = Modifier
-                        .width(80.dp)
-                        .padding(0.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = animatedStateColor),
+                    contentPadding = PaddingValues(horizontal = 12.dp)
                 ) {
                     Text(
                         text = task.state.toString(),
-                        fontWeight = FontWeight(600),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         color = Color.White
                     )
                 }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
+                
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     DropdownMenuItem(
                         text = { Text("À faire") },
-                        onClick = {
-                            expanded = false
-                            onMarkTodo()
-                        }
+                        onClick = { onMarkTodo(); expanded = false }
                     )
                     DropdownMenuItem(
                         text = { Text("Réalisée") },
-                        onClick = {
-                            expanded = false
-                            onMarkComplete()
-                        }
+                        onClick = { onMarkComplete(); expanded = false }
                     )
                 }
-
             }
         }
     }
