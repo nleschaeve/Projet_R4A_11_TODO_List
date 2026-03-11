@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import com.example.todolist.controller.TaskController
 import com.example.todolist.model.entity.Task
 import com.example.todolist.model.entity.TaskState
+import com.example.todolist.model.entity.TaskPriority
 import com.example.todolist.navigation.NavRoutes
 import com.example.todolist.ui.theme.Green
 import com.example.todolist.ui.theme.Red
@@ -61,8 +62,13 @@ fun TaskListView(controller: TaskController, navController: NavController) {
         lastLateCount = currentLateCount
     }
 
-    // Tri des tâches par état (LATE -> TODO -> DONE) puis par date
+    // Tri des tâches par priorité (CRITICAL -> IMPORTANT -> NONE), puis par état (LATE -> TODO -> DONE), puis par date
     val sortedTasks = remember(tasks, sortedAsc) {
+        val priorityOrder = mapOf(
+            TaskPriority.CRITICAL to 0,
+            TaskPriority.IMPORTANT to 1,
+            TaskPriority.NONE to 2
+        )
         val stateOrder = mapOf(
             TaskState.LATE to 0,
             TaskState.TODO to 1,
@@ -70,11 +76,13 @@ fun TaskListView(controller: TaskController, navController: NavController) {
         )
         if (sortedAsc) {
             tasks.sortedWith(compareBy(
+                { priorityOrder[it.priority] },
                 { stateOrder[it.state] },
                 { it.dueDate ?: LocalDate.MAX }
             ))
         } else {
-            tasks.sortedWith(compareByDescending<Task> { stateOrder[it.state] }
+            tasks.sortedWith(compareByDescending<Task> { priorityOrder[it.priority] }
+                .thenByDescending { stateOrder[it.state] }
                 .thenByDescending { it.dueDate ?: LocalDate.MIN })
         }
     }

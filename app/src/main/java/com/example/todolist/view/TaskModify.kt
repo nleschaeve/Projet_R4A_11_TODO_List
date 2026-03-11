@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.todolist.controller.TaskController
 import com.example.todolist.model.entity.TaskPeriodicity
+import com.example.todolist.model.entity.TaskPriority
 import com.example.todolist.ui.theme.ticTaskTextFieldColors
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -38,9 +39,11 @@ fun TaskModify(
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
     var periodicity by remember { mutableStateOf(TaskPeriodicity.NONE) }
+    var priority by remember { mutableStateOf(TaskPriority.NONE) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showPeriodicityMenu by remember { mutableStateOf(false) }
+    var showPriorityMenu by remember { mutableStateOf(false) }
     var isInitialized by remember { mutableStateOf(false) }
 
     // Initialiser les champs quand la tâche est chargée
@@ -51,6 +54,7 @@ fun TaskModify(
             dueDate = task!!.dueDate
             dueTime = task!!.dueTime
             periodicity = task!!.periodicity
+            priority = task!!.priority
         }
     }
 
@@ -196,6 +200,36 @@ fun TaskModify(
                     }
                 }
 
+                // Priorité de la tâche
+                ExposedDropdownMenuBox(
+                    expanded = showPriorityMenu,
+                    onExpandedChange = { showPriorityMenu = !showPriorityMenu }
+                ) {
+                    OutlinedTextField(
+                        value = priority.toString(),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Priorité") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPriorityMenu) },
+                        colors = ticTaskTextFieldColors(),
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showPriorityMenu,
+                        onDismissRequest = { showPriorityMenu = false }
+                    ) {
+                        TaskPriority.entries.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption.toString()) },
+                                onClick = {
+                                    priority = selectionOption
+                                    showPriorityMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 // Description de la tâche
                 OutlinedTextField(
                     value = description,
@@ -235,6 +269,7 @@ fun TaskModify(
                                         dueDate = dueDate,
                                         dueTime = dueTime,
                                         periodicity = periodicity,
+                                        priority = priority,
                                         imageUri = null
                                     )
                                     controller.updateTask(updatedTask)

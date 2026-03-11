@@ -15,5 +15,6 @@ data class Task(
     val dueTime: LocalTime?,
     val state: TaskState,
     val periodicity: TaskPeriodicity = TaskPeriodicity.NONE,
+    val priority: TaskPriority = TaskPriority.NONE,
     val imageUri: String? = null
 )

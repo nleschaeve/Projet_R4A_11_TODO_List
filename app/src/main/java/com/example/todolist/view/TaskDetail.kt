@@ -138,6 +138,15 @@ fun TaskDetail(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                    // Priority of the task
+                    if (task?.priority != null) {
+                        Text(
+                            text = "Priorité : ${task?.priority}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight(500),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
             // Description of the task
