@@ -129,6 +129,15 @@ fun TaskDetail(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                    // Periodicity of the task
+                    if (task?.periodicity != null) {
+                        Text(
+                            text = "Périodicité : ${task?.periodicity}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight(500),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
             // Description of the task

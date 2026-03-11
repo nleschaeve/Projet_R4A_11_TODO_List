@@ -44,6 +44,12 @@ class TaskController(
     suspend fun completeTask(task: Task) {
         val updated = statusService.markAsDone(task)
         repository.update(updated)
+
+        // Si la tâche est périodique, créer la prochaine occurrence
+        val nextOccurrence = statusService.getNextOccurrence(task)
+        if (nextOccurrence != null) {
+            repository.add(nextOccurrence)
+        }
     }
 
     suspend fun checkAndUpdateLateTasks(): Int {

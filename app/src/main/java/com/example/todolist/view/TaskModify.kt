@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.todolist.controller.TaskController
+import com.example.todolist.model.entity.TaskPeriodicity
+import com.example.todolist.ui.theme.ticTaskTextFieldColors
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -21,6 +23,7 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskModify(
     controller: TaskController,
@@ -34,8 +37,10 @@ fun TaskModify(
     var description by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
+    var periodicity by remember { mutableStateOf(TaskPeriodicity.NONE) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showPeriodicityMenu by remember { mutableStateOf(false) }
     var isInitialized by remember { mutableStateOf(false) }
 
     // Initialiser les champs quand la tâche est chargée
@@ -45,6 +50,7 @@ fun TaskModify(
             description = task!!.description
             dueDate = task!!.dueDate
             dueTime = task!!.dueTime
+            periodicity = task!!.periodicity
         }
     }
 
@@ -160,6 +166,36 @@ fun TaskModify(
                     )
                 }
 
+                // Périodicité de la tâche
+                ExposedDropdownMenuBox(
+                    expanded = showPeriodicityMenu,
+                    onExpandedChange = { showPeriodicityMenu = !showPeriodicityMenu }
+                ) {
+                    OutlinedTextField(
+                        value = periodicity.toString(),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Périodicité") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPeriodicityMenu) },
+                        colors = ticTaskTextFieldColors(),
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showPeriodicityMenu,
+                        onDismissRequest = { showPeriodicityMenu = false }
+                    ) {
+                        TaskPeriodicity.entries.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption.toString()) },
+                                onClick = {
+                                    periodicity = selectionOption
+                                    showPeriodicityMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 // Description de la tâche
                 OutlinedTextField(
                     value = description,
@@ -198,6 +234,7 @@ fun TaskModify(
                                         description = description,
                                         dueDate = dueDate,
                                         dueTime = dueTime,
+                                        periodicity = periodicity,
                                         imageUri = null
                                     )
                                     controller.updateTask(updatedTask)

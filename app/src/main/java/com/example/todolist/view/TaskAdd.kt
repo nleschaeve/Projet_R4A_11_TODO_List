@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
 import com.example.todolist.controller.TaskController
 import com.example.todolist.model.entity.Task
+import com.example.todolist.model.entity.TaskPeriodicity
 import com.example.todolist.model.entity.TaskState
 import com.example.todolist.ui.theme.ticTaskTextFieldColors
 import kotlinx.coroutines.launch
@@ -35,6 +36,7 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalTime
 import androidx.compose.ui.window.Dialog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskAdd(
     controller: TaskController,
@@ -44,11 +46,13 @@ fun TaskAdd(
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var periodicity by remember { mutableStateOf(TaskPeriodicity.NONE) }
 
     var selectedDate by remember { mutableStateOf<Long?>(null) }
     var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showPeriodicityMenu by remember { mutableStateOf(false) }
 
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
@@ -166,6 +170,36 @@ fun TaskAdd(
                 )
             }
 
+            // Périodicité de la tâche
+            ExposedDropdownMenuBox(
+                expanded = showPeriodicityMenu,
+                onExpandedChange = { showPeriodicityMenu = !showPeriodicityMenu }
+            ) {
+                OutlinedTextField(
+                    value = periodicity.toString(),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Périodicité") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPeriodicityMenu) },
+                    colors = ticTaskTextFieldColors(),
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = showPeriodicityMenu,
+                    onDismissRequest = { showPeriodicityMenu = false }
+                ) {
+                    TaskPeriodicity.entries.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption.toString()) },
+                            onClick = {
+                                periodicity = selectionOption
+                                showPeriodicityMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
             // Description de la tâche (optionnel)
             OutlinedTextField(
                 value = description,
@@ -192,6 +226,7 @@ fun TaskAdd(
                                 },
                                 dueTime = selectedTime,
                                 state = TaskState.TODO,
+                                periodicity = periodicity,
                                 imageUri = null
                             )
                             controller.addTask(task)
