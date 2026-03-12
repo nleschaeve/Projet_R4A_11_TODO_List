@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.navigation.NavController
 import com.example.todolist.controller.TaskController
 import com.example.todolist.model.entity.Task
@@ -38,6 +38,7 @@ import kotlin.random.Random
 fun TaskListView(controller: TaskController, navController: NavController) {
     val scope = rememberCoroutineScope()
     val tasks by controller.getAllTasks().collectAsState(initial = emptyList())
+    val totalPoints by controller.getTotalPoints().collectAsState(initial = 0)
     var sortedAsc by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -76,13 +77,13 @@ fun TaskListView(controller: TaskController, navController: NavController) {
         )
         if (sortedAsc) {
             tasks.sortedWith(compareBy(
-                { priorityOrder[it.priority] },
                 { stateOrder[it.state] },
+                { priorityOrder[it.priority] },
                 { it.dueDate ?: LocalDate.MAX }
             ))
         } else {
-            tasks.sortedWith(compareByDescending<Task> { priorityOrder[it.priority] }
-                .thenByDescending { stateOrder[it.state] }
+            tasks.sortedWith(compareByDescending<Task> { stateOrder[it.state] }
+                .thenBy { priorityOrder[it.priority] }
                 .thenByDescending { it.dueDate ?: LocalDate.MIN })
         }
     }
@@ -110,6 +111,30 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight(1000)
                 )
+
+                // Bouton pour accéder aux récompenses
+                Button(
+                    onClick = { navController.navigate(NavRoutes.Rewards.route) },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFD700).copy(alpha = 0.3f)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Récompenses",
+                        tint = Color(0xFFFFAA00),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "${totalPoints ?: 0}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFAA00)
+                    )
+                }
             }
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -150,7 +175,7 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Filtrer",
+                            text = "Trier",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight(1000)
@@ -186,9 +211,16 @@ fun TaskListView(controller: TaskController, navController: NavController) {
                                 },
                                 onMarkComplete = {
                                     scope.launch {
+                                        // Calculer les points avant de compléter
+                                        val points = when (task.priority) {
+                                            TaskPriority.CRITICAL -> 50
+                                            TaskPriority.IMPORTANT -> 30
+                                            TaskPriority.NONE -> 10
+                                        }
                                         controller.completeTask(task)
+                                        val message = congratulationMessages[Random.nextInt(congratulationMessages.size)]
                                         snackbarHostState.showSnackbar(
-                                            message = congratulationMessages[Random.nextInt(congratulationMessages.size)],
+                                            message = "$message +$points points ⭐",
                                             duration = SnackbarDuration.Short
                                         )
                                     }

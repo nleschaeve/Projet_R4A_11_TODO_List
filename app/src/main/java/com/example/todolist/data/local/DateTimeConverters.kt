@@ -6,6 +6,7 @@ import com.example.todolist.model.entity.TaskPeriodicity
 import com.example.todolist.model.entity.TaskPriority
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.LocalDateTime
 
 class DateTimeConverters {
 
@@ -27,6 +28,16 @@ class DateTimeConverters {
     @TypeConverter
     fun toLocalTime(timeString: String?): LocalTime? {
         return timeString?.let { LocalTime.parse(it) }
+    }
+
+    @TypeConverter
+    fun fromLocalDateTime(dateTime: LocalDateTime?): String? {
+        return dateTime?.toString()
+    }
+
+    @TypeConverter
+    fun toLocalDateTime(dateTimeString: String?): LocalDateTime? {
+        return dateTimeString?.let { LocalDateTime.parse(it) }
     }
 
     @TypeConverter

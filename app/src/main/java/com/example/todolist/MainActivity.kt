@@ -10,6 +10,7 @@ import com.example.todolist.controller.TaskManager
 import com.example.todolist.data.local.AppDatabase
 import com.example.todolist.model.repository.TaskRepositoryImpl
 import com.example.todolist.model.service.TaskStatusService
+import com.example.todolist.model.service.RewardService
 import com.example.todolist.navigation.AppNavGraph
 import com.example.todolist.ui.theme.TicTaskTheme
 import kotlinx.coroutines.launch
@@ -28,13 +29,15 @@ class TaskListActivity : ComponentActivity() {
         database = AppDatabase.getInstance(this)
 
         val dao = database.taskDao()
+        val rewardDao = database.rewardDao()
         val repository = TaskRepositoryImpl(dao)
         val service = TaskStatusService()
+        val rewardService = RewardService(rewardDao)
 
         taskManager = TaskManager(repository, service)
 
         // Initialisation du TaskController
-        taskController = TaskController(repository, service)
+        taskController = TaskController(repository, service, rewardService)
 
         setContent {
             TicTaskTheme {

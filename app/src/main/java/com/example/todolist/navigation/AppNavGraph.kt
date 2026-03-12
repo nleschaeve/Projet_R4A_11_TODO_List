@@ -12,6 +12,7 @@ import com.example.todolist.view.TaskAdd
 import com.example.todolist.view.TaskListView
 import com.example.todolist.view.TaskDetail
 import com.example.todolist.view.TaskModify
+import com.example.todolist.view.RewardsView
 
 @Composable
 fun AppNavGraph(
@@ -34,6 +35,14 @@ fun AppNavGraph(
         // Écran d'ajout de tâche
         composable(NavRoutes.TaskAdd.route) {
             TaskAdd(
+                controller = taskController,
+                navController = navController
+            )
+        }
+
+        // Écran des récompenses
+        composable(NavRoutes.Rewards.route) {
+            RewardsView(
                 controller = taskController,
                 navController = navController
             )

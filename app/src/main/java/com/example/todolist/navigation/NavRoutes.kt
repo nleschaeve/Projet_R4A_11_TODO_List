@@ -5,6 +5,7 @@ package com.example.todolist.navigation
 sealed class NavRoutes(val route: String) {
     object TaskList : NavRoutes("task_list")
     object TaskAdd : NavRoutes("task_add")
+    object Rewards : NavRoutes("rewards")
     object TaskDetail : NavRoutes("task_detail/{taskId}") {
         fun createRoute(taskId: Int) = "task_detail/$taskId"
     }

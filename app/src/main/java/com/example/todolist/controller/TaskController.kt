@@ -4,12 +4,14 @@ import com.example.todolist.model.entity.Task
 import com.example.todolist.model.entity.TaskState
 import com.example.todolist.model.repository.TaskRepository
 import com.example.todolist.model.service.TaskStatusService
+import com.example.todolist.model.service.RewardService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class TaskController(
     private val repository: TaskRepository,
-    private val statusService: TaskStatusService
+    private val statusService: TaskStatusService,
+    private val rewardService: RewardService
 ) {
 
     suspend fun addTask(task: Task) {
@@ -45,6 +47,9 @@ class TaskController(
         val updated = statusService.markAsDone(task)
         repository.update(updated)
 
+        // Attribuer une récompense pour la complétion
+        rewardService.rewardTaskCompletion(task)
+
         // Si la tâche est périodique, créer la prochaine occurrence
         val nextOccurrence = statusService.getNextOccurrence(task)
         if (nextOccurrence != null) {
@@ -63,4 +68,10 @@ class TaskController(
         }
         return updatedCount
     }
+
+    fun getTotalPoints() = rewardService.getTotalPoints()
+
+    fun getRecentRewards(limit: Int = 10) = rewardService.getRecentRewards(limit)
+
+    fun getAllRewards() = rewardService.getAllRewards()
 }
