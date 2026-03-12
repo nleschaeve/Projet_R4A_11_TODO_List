@@ -8,7 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -35,7 +36,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.LocalTime
-import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
+import com.example.todolist.util.ImageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +100,8 @@ fun TaskAdd(
         // Formulaire d'ajout de tâche
         Column(
             modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -233,6 +237,27 @@ fun TaskAdd(
                 }
             }
 
+            // Image de la tâche
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                // Case pour afficher l'image séléctionnée
+                AsyncImage(
+                    model = selectedImageUri,
+                    contentDescription = null,
+                    modifier = Modifier.width(width = 200.dp).height(height = 200.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Button(onClick = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }) {
+                    Text(text = "Ajouter une image")
+                }
+            }
+
             // Description de la tâche (optionnel)
             OutlinedTextField(
                 value = description,
@@ -250,6 +275,11 @@ fun TaskAdd(
                         titleError = true
                     } else {
                         scope.launch {
+                            val imagePath = if (selectedImageUri != null) {
+                                ImageManager.saveImage(context, selectedImageUri!!)
+                            } else {
+                                null
+                            }
 
                             val task = Task(
                                 title = title,
@@ -261,7 +291,7 @@ fun TaskAdd(
                                 state = TaskState.TODO,
                                 periodicity = periodicity,
                                 priority = priority,
-                                imageUri = null
+                                imageUri = imagePath
                             )
                             controller.addTask(task)
                             navController.popBackStack() // Retour à la liste après ajout
@@ -275,4 +305,3 @@ fun TaskAdd(
         }
     }
 }
-

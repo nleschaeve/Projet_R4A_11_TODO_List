@@ -1,5 +1,7 @@
 package com.example.todolist.view
 
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.todolist.controller.TaskController
@@ -23,6 +27,12 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import coil.compose.AsyncImage
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.net.Uri
+import com.example.todolist.util.ImageManager
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +42,7 @@ fun TaskModify(
     taskId: Int
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val task by controller.getTaskById(taskId).collectAsState(initial = null)
 
     var title by remember { mutableStateOf("") }
@@ -45,6 +56,12 @@ fun TaskModify(
     var showPeriodicityMenu by remember { mutableStateOf(false) }
     var showPriorityMenu by remember { mutableStateOf(false) }
     var isInitialized by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedImageUri = uri }
+    )
 
     // Initialiser les champs quand la tâche est chargée
     LaunchedEffect(task) {
@@ -55,6 +72,14 @@ fun TaskModify(
             dueTime = task!!.dueTime
             periodicity = task!!.periodicity
             priority = task!!.priority
+            selectedImageUri = task!!.imageUri?.let { uriStr ->
+                try {
+                    Uri.parse(uriStr)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            isInitialized = true
         }
     }
 
@@ -98,6 +123,8 @@ fun TaskModify(
             // Formulaire de modification
             Column(
                 modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
                     .fillMaxWidth()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -182,7 +209,7 @@ fun TaskModify(
                         label = { Text("Périodicité") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPeriodicityMenu) },
                         colors = ticTaskTextFieldColors(),
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = showPeriodicityMenu,
@@ -212,7 +239,7 @@ fun TaskModify(
                         label = { Text("Priorité") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPriorityMenu) },
                         colors = ticTaskTextFieldColors(),
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = showPriorityMenu,
@@ -227,6 +254,46 @@ fun TaskModify(
                                 }
                             )
                         }
+                    }
+                }
+
+                // Image de la tâche
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Afficher l'image sélectionnée si elle existe
+                    if (selectedImageUri != null) {
+                        AsyncImage(
+                            model = selectedImageUri,
+                            contentDescription = "Image de la tâche",
+                            modifier = Modifier
+                                .width(width = 150.dp)
+                                .height(height = 150.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // Placeholder si pas d'image
+                        Box(
+                            modifier = Modifier
+                                .width(width = 150.dp)
+                                .height(height = 150.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Pas d'image",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Button(onClick = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }) {
+                        Text(text = "Sélectionner une image")
                     }
                 }
 
@@ -263,6 +330,17 @@ fun TaskModify(
                         onClick = {
                             scope.launch {
                                 task?.let { currentTask ->
+                                    val imagePath = when {
+                                        selectedImageUri != null && selectedImageUri.toString() != currentTask.imageUri -> {
+                                            ImageManager.saveImage(context, selectedImageUri!!)
+                                        }
+                                        selectedImageUri == null -> {
+                                            null
+                                        }
+                                        else -> {
+                                            currentTask.imageUri
+                                        }
+                                    }
                                     val updatedTask = currentTask.copy(
                                         title = title,
                                         description = description,
@@ -270,7 +348,7 @@ fun TaskModify(
                                         dueTime = dueTime,
                                         periodicity = periodicity,
                                         priority = priority,
-                                        imageUri = null
+                                        imageUri = imagePath
                                     )
                                     controller.updateTask(updatedTask)
                                 }

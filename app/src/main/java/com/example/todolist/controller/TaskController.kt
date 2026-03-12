@@ -69,6 +69,21 @@ class TaskController(
         return updatedCount
     }
 
+    suspend fun updateTaskStateWithCheck(task: Task, newState: TaskState) {
+        // Si on essaie de passer en TODO mais la tâche est en retard, forcer LATE
+        val finalState = if (newState == TaskState.TODO && statusService.isLate(task)) {
+            TaskState.LATE
+        } else {
+            newState
+        }
+
+        when (finalState) {
+            TaskState.DONE -> completeTask(task)
+            TaskState.TODO -> markTaskAsTodo(task)
+            TaskState.LATE -> repository.update(statusService.markAsLate(task))
+        }
+    }
+
     fun getTotalPoints() = rewardService.getTotalPoints()
 
     fun getRecentRewards(limit: Int = 10) = rewardService.getRecentRewards(limit)
