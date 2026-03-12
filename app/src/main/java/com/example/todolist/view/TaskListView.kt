@@ -240,13 +240,34 @@ fun TaskItem(
                         .clip(CircleShape)
                         .background(animatedStateColor)
                 )
-                TextButton(onClick = displayTask) {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                    modifier = Modifier.height(height = 65.dp)
+                ) {
+                    TextButton(
+                        onClick = displayTask,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        modifier = Modifier.padding(0.dp)
+                    ) {
+                        Text(
+                            text = task.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(0.dp)
+                        )
+                    }
+                    if (task.priority.toString() != "Aucune") {
+                        Text(
+                            text = task.priority.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .offset(y = (-15).dp)
+                                .padding(horizontal = 25.dp)
+                        )
+                    }
                 }
             }
             
